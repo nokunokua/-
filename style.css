@@ -228,7 +228,7 @@ body.pseudo-fullscreen #app {
 }
 
 /* ============================================================================
-   スマホ横画面（max-height: 500px）専用・完全フィット最適化
+   スマホ横画面（max-height: 500px）専用・完全フィット＆アスペクト比固定
    ※ PC（Chromebook）では一切適用されないためPC画面は100%そのまま維持されます
 ============================================================================ */
 @media screen and (max-height: 500px) {
@@ -236,7 +236,6 @@ body.pseudo-fullscreen #app {
     display: inline-flex !important;
   }
 
-  /* 1. 画面全体を100dvhに固定し、左右に自然な黒帯を持たせて遊びやすい比率に調整 */
   html, body {
     position: fixed !important;
     inset: 0 !important;
@@ -255,7 +254,6 @@ body.pseudo-fullscreen #app {
     touch-action: manipulation !important;
   }
 
-  /* 3. 横長すぎるiPhone画面でも敵城と鏡餅城の距離感がちょうどよくなるよう横幅比率を調整（左右黒帯） */
   #app {
     position: relative !important;
     width: min(100vw, 176dvh) !important;
@@ -337,11 +335,12 @@ body.pseudo-fullscreen #app {
     gap: 0.3rem !important;
   }
 
-  /* --- バトル画面全体 --- */
+  /* --- バトル画面全体（左右の余白は黒帯にし、キャンバス比率を崩さない） --- */
   #battle-screen {
     width: 100% !important;
     height: 100dvh !important;
     max-height: 100dvh !important;
+    background-color: #1c140d !important;
     display: flex !important;
     flex-direction: column !important;
     justify-content: space-between !important;
@@ -422,17 +421,36 @@ body.pseudo-fullscreen #app {
     font-size: 9.5px !important;
   }
 
-  /* 中央バトルフィールド */
+  /* ==========================================================================
+     中央バトルフィールド：PC版と同じ比率（2.05 : 1）を厳密維持し、丸もち・城が絶対に潰れないようにする
+     ========================================================================== */
   #canvas-container {
     flex: 1 1 auto !important;
     min-height: 0 !important;
-    height: auto !important;
-    width: 100% !important;
+    height: 100% !important;
+    width: auto !important;
+    max-width: 100% !important;
+    aspect-ratio: 2.05 / 1 !important;
+    margin: 0 auto !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-left: 2px solid #2c1e16 !important;
+    border-right: 2px solid #2c140d !important;
     overflow: hidden !important;
   }
 
-  /* 2. 下部操作パネル（画面の約41%・最低152px確保し、10枠すべて見切れなし表示） */
+  #game-canvas {
+    width: 100% !important;
+    height: 100% !important;
+    aspect-ratio: 2.05 / 1 !important;
+    object-fit: contain !important;
+    display: block !important;
+  }
+
+  /* 下部操作パネル（完璧に収まったレイアウトをそのまま維持） */
   #battle-bottom-panel {
+    width: 100% !important;
     height: clamp(152px, 41dvh, 182px) !important;
     min-height: clamp(152px, 41dvh, 182px) !important;
     max-height: clamp(152px, 41dvh, 182px) !important;
@@ -491,7 +509,7 @@ body.pseudo-fullscreen #app {
     border-radius: 5px !important;
   }
 
-  /* 1. 中央：出撃スロット（5×2ボタン）全要素（Lv・イラスト・キャラ名・〇〇円）見切れ防止 */
+  /* 中央：出撃スロット（5×2ボタン） */
   #unit-slots {
     flex: 1 1 auto !important;
     height: 100% !important;
@@ -522,7 +540,6 @@ body.pseudo-fullscreen #app {
     gap: 0 !important;
   }
 
-  /* スロット内の全テキスト・バッジ要素の余白と高さを引き締め */
   #unit-slots > button *,
   #unit-slots .slot-btn-compact * {
     margin-top: 0 !important;
@@ -530,7 +547,6 @@ body.pseudo-fullscreen #app {
     line-height: 1.05 !important;
   }
 
-  /* 上段：スロット番号とLv表示の行 */
   #unit-slots > button > div:first-child,
   #unit-slots .slot-btn-compact > div:first-child {
     width: 100% !important;
@@ -550,7 +566,6 @@ body.pseudo-fullscreen #app {
     line-height: 1.05 !important;
   }
 
-  /* 中段：キャラクターのイラスト（高さ自動フィットで上下が切れない） */
   #unit-slots canvas,
   #unit-slots img {
     height: 25px !important;
@@ -564,7 +579,6 @@ body.pseudo-fullscreen #app {
     display: block !important;
   }
 
-  /* 下段：キャラ名 と コスト（〇〇円） */
   #unit-slots > button > div:not(:first-child),
   #unit-slots > button > span,
   #unit-slots .slot-btn-compact > div:not(:first-child),
@@ -578,7 +592,6 @@ body.pseudo-fullscreen #app {
     flex-shrink: 0 !important;
   }
 
-  /* コスト表示（最後の行）をクッキリ見やすく */
   #unit-slots > button > div:last-child,
   #unit-slots .slot-btn-compact > div:last-child {
     font-size: 8.5px !important;
