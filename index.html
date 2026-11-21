@@ -17,6 +17,20 @@
 </head>
 <body class="w-screen h-screen flex items-center justify-center bg-stone-900">
 
+  <!-- スマホ縦持ち警告オーバーレイ（スマホ縦向き時のみ表示・PCでは絶対に出ません） -->
+  <div id="portrait-warning-overlay" aria-live="polite">
+    <div class="portrait-warning-card">
+      <div class="portrait-phone-icon">📱</div>
+      <div class="portrait-badge">🎍 おもち大戦争 🎍</div>
+      <h2 class="font-title portrait-title">スマホを横向きにして<br>遊んでね！</h2>
+      <p class="portrait-desc">
+        画面を横向き（ランドスケープ）に回転すると、<br>
+        バトル画面と10体の出撃ボタンが<br>
+        1画面にピッタリ収まって遊べるよ！
+      </p>
+    </div>
+  </div>
+
   <!-- メインゲームコンテナ -->
   <div id="app" class="relative w-full h-full max-w-[1280px] max-h-[780px] bg-amber-50 overflow-hidden shadow-2xl sm:rounded-2xl sm:border-4 border-[#2c1e16] flex flex-col">
 
@@ -466,10 +480,10 @@
   <script src="screens.js"></script>
   <script src="workshop.js"></script>
 
-  <!-- スマホ全画面切替ヘルパー（PCには影響しません） -->
+  <!-- スマホ全画面切替＆iPhoneズーム・画面揺れ完全防止スクリプト -->
   <script>
     function updateFullscreenButtonsUI() {
-      const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
+      const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement || document.body.classList.contains('pseudo-fullscreen'));
       const tIcon = document.getElementById('fs-icon-title');
       const tLabel = document.getElementById('fs-label-title');
       const bIcon = document.getElementById('fs-icon-battle');
@@ -482,22 +496,21 @@
       try {
         const docEl = document.documentElement;
         const isFs = !!(document.fullscreenElement || document.webkitFullscreenElement);
-        if (!isFs) {
+        if (!isFs && !document.body.classList.contains('pseudo-fullscreen')) {
           if (docEl.requestFullscreen) {
             await docEl.requestFullscreen();
           } else if (docEl.webkitRequestFullscreen) {
             await docEl.webkitRequestFullscreen();
           } else {
-            document.body.classList.toggle('pseudo-fullscreen');
+            document.body.classList.add('pseudo-fullscreen');
           }
         } else {
-          if (document.exitFullscreen) {
+          if (document.exitFullscreen && document.fullscreenElement) {
             await document.exitFullscreen();
-          } else if (document.webkitExitFullscreen) {
+          } else if (document.webkitExitFullscreen && document.webkitFullscreenElement) {
             await document.webkitExitFullscreen();
-          } else {
-            document.body.classList.remove('pseudo-fullscreen');
           }
+          document.body.classList.remove('pseudo-fullscreen');
         }
       } catch (e) {
         document.body.classList.toggle('pseudo-fullscreen');
@@ -514,6 +527,45 @@
       updateFullscreenButtonsUI();
       setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
     });
+
+    // iOS Safari ピンチズーム・ダブルタップ拡大・不要な画面揺れの完全防止
+    (function preventIOSZoomAndBounce() {
+      // 1. iOS Safari 固有のピンチジェスチャーを禁止
+      document.addEventListener('gesturestart', function (e) {
+        e.preventDefault();
+      }, { passive: false });
+      document.addEventListener('gesturechange', function (e) {
+        e.preventDefault();
+      }, { passive: false });
+      document.addEventListener('gestureend', function (e) {
+        e.preventDefault();
+      }, { passive: false });
+
+      // 2. 2本指ピンチズームとスクロール外エリアの画面揺れを禁止
+      document.addEventListener('touchmove', function (e) {
+        if (e.touches && e.touches.length > 1) {
+          e.preventDefault();
+          return;
+        }
+        // スクロール可能な一覧リスト内だけはタッチスクロールを許可
+        const scrollable = e.target.closest(
+          '#title-screen, #stage-select-grid, #encyclopedia-list, #deck-available-list, #upgrade-units-grid, #workshop-body, #gacha-results-grid, #gacha-result-screen, .overflow-y-auto'
+        );
+        if (!scrollable) {
+          e.preventDefault();
+        }
+      }, { passive: false });
+
+      // 3. 高速連打時のダブルタップ拡大を完全に無効化
+      let lastTouchEndTime = 0;
+      document.addEventListener('touchend', function (e) {
+        const now = Date.now();
+        if (now - lastTouchEndTime <= 300) {
+          e.preventDefault();
+        }
+        lastTouchEndTime = now;
+      }, { passive: false });
+    })();
   </script>
 </body>
 </html>
