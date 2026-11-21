@@ -11,22 +11,27 @@
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
-body {
+html, body {
   font-family: var(--font-body);
   background-color: #1c140d;
   color: #2c1e16;
   margin: 0;
   padding: 0;
   overflow: hidden;
+  overscroll-behavior: none;
   touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
 }
 
-button, a, canvas {
-  touch-action: manipulation;
-  -webkit-tap-highlight-color: transparent;
+input, textarea {
+  user-select: text;
+  -webkit-user-select: text;
 }
 
 .font-title {
@@ -126,14 +131,22 @@ button, a, canvas {
   border: 2px solid #f3e5c8;
 }
 
-/* PCではスマホ専用の全画面ボタンを非表示にして今のPC画面を維持 */
+/* ============================================================================
+   PC画面（Chromebook等）では一切出さないスマホ専用パーツの初期設定
+============================================================================ */
 .mobile-only-btn {
-  display: none;
+  display: none !important;
 }
 
-/* 擬似全画面モード（iPhone Safari等での全画面切替時） */
+#portrait-warning-overlay {
+  display: none !important;
+}
+
+/* 擬似全画面モード */
 body.pseudo-fullscreen,
 body.pseudo-fullscreen #app {
+  position: fixed !important;
+  inset: 0 !important;
   width: 100vw !important;
   height: 100dvh !important;
   max-width: 100vw !important;
@@ -143,22 +156,99 @@ body.pseudo-fullscreen #app {
 }
 
 /* ============================================================================
-   スマホ専用 レスポンシブ最適化
-   ※ PC（Chromebook）では一切適用されないため、PCレイアウトは100%維持されます
+   3. スマホ縦持ち警告画面（スマホ縦向き時のみ全画面表示・PCでは絶対に出ない）
 ============================================================================ */
-@media (max-width: 920px) and (pointer: coarse), (max-width: 767px) {
-  .mobile-only-btn {
-    display: inline-flex;
+@keyframes phoneRotateTilt {
+  0%, 15% { transform: rotate(0deg); }
+  45%, 75% { transform: rotate(-90deg); }
+  100% { transform: rotate(0deg); }
+}
+
+@media screen and (orientation: portrait) and (pointer: coarse),
+       screen and (orientation: portrait) and (hover: none) and (max-width: 900px) {
+  #portrait-warning-overlay {
+    display: flex !important;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 99999 !important;
+    width: 100vw !important;
+    height: 100dvh !important;
+    background: radial-gradient(circle at 50% 35%, #451a03 0%, #1c140d 100%);
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    text-align: center;
   }
 
-  /* スマホでは画面いっぱいの全画面表示にフィット */
+  .portrait-warning-card {
+    background-color: #fffbeb;
+    border: 4px solid #2c1e16;
+    border-radius: 1.75rem;
+    padding: 1.75rem 1.25rem;
+    max-width: 340px;
+    width: 100%;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.65);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .portrait-phone-icon {
+    font-size: 3.75rem;
+    line-height: 1;
+    display: inline-block;
+    animation: phoneRotateTilt 2.2s ease-in-out infinite;
+    margin-bottom: 0.25rem;
+  }
+
+  .portrait-badge {
+    background-color: #dc2626;
+    color: #fde68a;
+    font-weight: 900;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.85rem;
+    border-radius: 9999px;
+    border: 2px solid #2c1e16;
+  }
+
+  .portrait-title {
+    font-size: 1.5rem;
+    line-height: 1.3;
+    color: #2c1e16;
+    margin: 0.15rem 0;
+  }
+
+  .portrait-desc {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #57534e;
+    line-height: 1.6;
+    margin: 0;
+  }
+}
+
+/* ============================================================================
+   2. スマホ横画面（高さ500px以下 / 450px以下）専用・1画面フィット最適化
+   ※ PC（Chromebook）では適用されないためPC画面は100%そのまま維持されます
+============================================================================ */
+@media screen and (max-height: 500px) and (pointer: coarse),
+       screen and (max-height: 450px) and (hover: none) {
+  .mobile-only-btn {
+    display: inline-flex !important;
+  }
+
   html, body {
+    position: fixed !important;
+    inset: 0 !important;
     width: 100vw !important;
     height: 100dvh !important;
     overflow: hidden !important;
   }
 
   #app {
+    position: fixed !important;
+    inset: 0 !important;
     width: 100vw !important;
     height: 100dvh !important;
     max-width: 100vw !important;
@@ -167,160 +257,259 @@ body.pseudo-fullscreen #app {
     border: none !important;
   }
 
-  /* --- タイトル画面（スマホ縦画面） --- */
+  /* --- タイトル画面（スマホ横画面） --- */
   #title-screen {
-    padding: max(0.5rem, env(safe-area-inset-top)) 0.6rem max(0.6rem, env(safe-area-inset-bottom)) 0.6rem !important;
-    gap: 0.45rem;
+    padding: 0.35rem max(0.6rem, env(safe-area-inset-right)) max(0.35rem, env(safe-area-inset-bottom)) max(0.6rem, env(safe-area-inset-left)) !important;
+    gap: 0.25rem !important;
+    justify-content: flex-start !important;
   }
 
   #title-top-bar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.4rem;
+    flex-wrap: nowrap !important;
+    gap: 0.35rem !important;
   }
 
-  #title-resource-bar {
-    justify-content: center;
-    gap: 0.3rem;
+  #title-resource-bar,
+  #extended-status-bar {
+    gap: 0.25rem !important;
   }
 
   #title-resource-bar > button,
-  #title-resource-bar > div {
-    font-size: 11px !important;
-    padding: 0.25rem 0.5rem !important;
-    border-radius: 0.65rem !important;
-  }
-
-  /* メニュー6ボタンを3列×2行の押しやすいグリッドに整理 */
-  #extended-status-bar {
-    display: grid !important;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.35rem;
-    width: 100%;
-  }
-
+  #title-resource-bar > div,
   #extended-status-bar > button {
-    width: 100%;
-    padding: 0.42rem 0.25rem !important;
-    font-size: 11px !important;
+    font-size: 10px !important;
+    padding: 0.22rem 0.45rem !important;
+    border-radius: 0.55rem !important;
     border-width: 2px !important;
     box-shadow: 0 2px 0 #2c1e16 !important;
-    white-space: nowrap;
   }
 
   #title-hero-block {
-    margin-top: 0.1rem !important;
-    margin-bottom: 0.1rem !important;
+    margin: 0 !important;
+    flex-direction: row !important;
+    justify-content: center !important;
+    gap: 0.65rem !important;
+  }
+
+  #title-hero-block > div:first-child {
+    display: none !important;
   }
 
   #title-hero-block h1 {
-    font-size: 2rem !important;
+    font-size: 1.55rem !important;
     line-height: 1.1 !important;
   }
 
   #title-hero-block p {
-    font-size: 0.85rem !important;
+    font-size: 0.8rem !important;
+    margin-top: 0 !important;
   }
 
   #title-stage-box {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    padding: 0.5rem !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding: 0.4rem 0.55rem !important;
+  }
+
+  #title-stage-box > div:first-child {
+    margin-bottom: 0.3rem !important;
   }
 
   #stage-select-grid {
-    flex: 1;
+    flex: 1 !important;
     max-height: none !important;
-    gap: 0.45rem !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 0.35rem !important;
   }
 
-  /* --- バトル画面（スマホ縦画面） --- */
+  /* --- バトル画面：上部HUD（横1列コンパクト化してフィールドを広く確保） --- */
   #battle-hud-top {
-    padding: max(0.35rem, env(safe-area-inset-top)) 0.45rem 0.35rem 0.45rem !important;
+    padding: 0.25rem max(0.5rem, env(safe-area-inset-right)) 0.2rem max(0.5rem, env(safe-area-inset-left)) !important;
+    align-items: center !important;
     gap: 0.35rem !important;
   }
 
   #battle-hud-left {
+    flex-wrap: nowrap !important;
     gap: 0.25rem !important;
-    max-width: 66%;
+    min-width: 0 !important;
   }
 
   #battle-hud-left > button {
-    height: 2.1rem !important;
-    min-width: 2.1rem !important;
+    height: 1.95rem !important;
+    min-width: 1.95rem !important;
     padding-left: 0.45rem !important;
     padding-right: 0.45rem !important;
-    font-size: 11px !important;
+    font-size: 10px !important;
+    border-radius: 0.55rem !important;
     border-width: 2px !important;
     box-shadow: 0 2px 0 #2c1e16 !important;
+    shrink: 0 !important;
   }
 
   #battle-stage-info {
-    padding: 0.25rem 0.5rem !important;
-    width: 100%;
+    padding: 0.18rem 0.5rem !important;
+    border-radius: 0.6rem !important;
+    border-width: 2px !important;
+    min-width: 0 !important;
   }
 
   #hud-stage-name {
-    font-size: 11px !important;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 10px !important;
+    line-height: 1.15 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 34vw !important;
   }
 
   #battle-stage-info > div:last-child {
-    font-size: 10px !important;
-    gap: 0.35rem !important;
+    font-size: 9px !important;
+    line-height: 1.1 !important;
+    margin-top: 1px !important;
+    gap: 0.25rem !important;
+    white-space: nowrap !important;
   }
 
   #battle-money-box {
-    padding: 0.3rem 0.55rem !important;
-    border-radius: 0.85rem !important;
+    padding: 0.2rem 0.55rem !important;
+    border-radius: 0.65rem !important;
+    border-width: 2px !important;
   }
 
   #battle-money-box > div:first-child {
-    font-size: 9px !important;
+    font-size: 8px !important;
+    line-height: 1 !important;
   }
 
   #battle-money-box > div:last-child {
-    font-size: 1.05rem !important;
+    font-size: 0.95rem !important;
+    line-height: 1.1 !important;
+    margin-top: 1px !important;
   }
 
-  /* 下部出撃コントロール（iPhoneホームバーのセーフエリア対応） */
+  #battle-money-box > div:last-child span {
+    font-size: 0.8rem !important;
+  }
+
+  /* --- バトル画面：下部パネル（働きもち・10体スロット・レンジ砲を1画面に完全収納） --- */
   #battle-bottom-panel {
-    padding: 0.35rem 0.35rem max(0.45rem, env(safe-area-inset-bottom)) 0.35rem !important;
-    gap: 0.3rem !important;
+    height: 86px !important;
+    min-height: 86px !important;
+    max-height: 86px !important;
+    padding: 3px max(0.45rem, env(safe-area-inset-right)) max(3px, env(safe-area-inset-bottom)) max(0.45rem, env(safe-area-inset-left)) !important;
+    gap: 0.35rem !important;
+    border-top-width: 3px !important;
+    flex-shrink: 0 !important;
   }
 
   #btn-worker,
   #btn-cannon {
-    width: 3.6rem !important;
-    height: 6.4rem !important;
-    padding: 0.25rem !important;
-    border-radius: 0.9rem !important;
+    width: 3.65rem !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    padding: 2px 3px !important;
+    border-radius: 0.65rem !important;
     border-width: 2px !important;
-    box-shadow: 0 3px 0 #2c1e16 !important;
+    box-shadow: 0 2px 0 #2c1e16 !important;
   }
 
+  #btn-worker > div:first-child,
+  #btn-cannon > div:nth-child(2) {
+    font-size: 8px !important;
+    padding: 1px 2px !important;
+    line-height: 1.1 !important;
+  }
+
+  #btn-worker span.text-xl,
+  #btn-cannon span.text-xl {
+    font-size: 0.95rem !important;
+    line-height: 1 !important;
+  }
+
+  #worker-lv,
+  #cannon-pct {
+    font-size: 10px !important;
+    line-height: 1 !important;
+    margin-top: 1px !important;
+  }
+
+  #worker-cost,
+  #cannon-status {
+    font-size: 8px !important;
+    padding: 1px 2px !important;
+    line-height: 1.1 !important;
+    border-radius: 0.35rem !important;
+  }
+
+  /* 中央10体出撃スロット（2段×5列すべてが縦に見切れず収まる） */
   #unit-slots {
-    gap: 0.25rem !important;
-    height: 6.4rem !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+    gap: 3px !important;
   }
 
+  #unit-slots > button,
   #unit-slots .slot-btn-compact {
-    padding: 0.15rem 0.1rem !important;
-    border-radius: 0.6rem !important;
-    font-size: 9px !important;
+    height: 100% !important;
+    min-height: 0 !important;
+    max-height: 100% !important;
+    padding: 1px 3px !important;
+    border-radius: 0.5rem !important;
+    border-width: 2px !important;
+    box-shadow: 0 2px 0 #2c1e16 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    line-height: 1 !important;
+    font-size: 8px !important;
   }
 
-  /* --- 各種モーダル（スマホ画面幅に最適化） --- */
+  #unit-slots canvas {
+    max-height: 19px !important;
+    width: auto !important;
+    margin: 0 auto !important;
+  }
+
+  #unit-slots > button span,
+  #unit-slots > button div {
+    font-size: 8px !important;
+    line-height: 1.05 !important;
+  }
+
+  /* --- 各種モーダル（横画面の高さにフィット） --- */
+  #pause-modal > div {
+    padding: 0.85rem 1.25rem !important;
+  }
+
+  #pause-modal h2 {
+    font-size: 1.2rem !important;
+    margin-bottom: 0.25rem !important;
+  }
+
+  #pause-modal p {
+    margin-bottom: 0.6rem !important;
+  }
+
+  #pause-modal button {
+    padding-top: 0.45rem !important;
+    padding-bottom: 0.45rem !important;
+    font-size: 0.85rem !important;
+  }
+
   #gacha-modal,
   #encyclopedia-modal,
   #deck-modal,
   #upgrade-modal,
   #workshop-modal {
-    padding: 0.35rem !important;
+    padding: 0.25rem !important;
   }
 
   #gacha-modal > div,
@@ -330,7 +519,7 @@ body.pseudo-fullscreen #app {
   #workshop-modal > div {
     width: 100% !important;
     height: 95dvh !important;
-    border-radius: 1.25rem !important;
+    border-radius: 1rem !important;
     border-width: 3px !important;
   }
 
@@ -339,78 +528,20 @@ body.pseudo-fullscreen #app {
   #deck-modal h2,
   #upgrade-modal h2,
   #workshop-modal h2 {
-    font-size: 0.98rem !important;
-    line-height: 1.25 !important;
-  }
-
-  /* デッキ編成の10枠スロットをスマホ幅で押しやすく */
-  #deck-current-slots {
-    gap: 0.25rem !important;
-  }
-
-  /* 大工房の4タブ文字折り返し防止 */
-  #workshop-modal .grid-cols-4 button {
-    font-size: 10px !important;
-    padding: 0.45rem 0.15rem !important;
+    font-size: 0.95rem !important;
   }
 }
 
-/* ============================================================================
-   スマホ横画面専用（高さを抑えてフィールドを広く見せる）
-============================================================================ */
-@media (max-height: 500px) and (pointer: coarse) {
-  .mobile-only-btn {
-    display: inline-flex;
-  }
-
-  html, body, #app {
-    width: 100vw !important;
-    height: 100dvh !important;
-    max-width: 100vw !important;
-    max-height: 100dvh !important;
-    border-radius: 0 !important;
-    border: none !important;
-  }
-
-  #title-screen {
-    padding: 0.35rem 0.75rem !important;
-  }
-
-  #title-top-bar {
-    flex-direction: row !important;
-    align-items: center !important;
-  }
-
-  #extended-status-bar {
-    display: flex !important;
-    width: auto !important;
-  }
-
-  #title-hero-block h1 {
-    font-size: 1.65rem !important;
-  }
-
-  #title-hero-block p,
-  #title-hero-block > div:first-child {
-    display: none !important;
-  }
-
+/* iPhone Safariで上下ツールバーが出ている超低高さ（350px以下）時の追加微調整 */
+@media screen and (max-height: 350px) and (pointer: coarse) {
   #battle-bottom-panel {
-    padding: 0.25rem 0.5rem !important;
+    height: 76px !important;
+    min-height: 76px !important;
+    max-height: 76px !important;
   }
 
-  #btn-worker,
-  #btn-cannon,
-  #unit-slots {
-    height: 5.2rem !important;
-  }
-
-  #gacha-modal > div,
-  #encyclopedia-modal > div,
-  #deck-modal > div,
-  #upgrade-modal > div,
-  #workshop-modal > div {
-    height: 96dvh !important;
+  #unit-slots canvas {
+    max-height: 15px !important;
   }
 }
 
